@@ -1,0 +1,29 @@
+from rest_framework import serializers
+from . import models  
+from rest_framework import serializers
+
+
+
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Question
+        fields = '__all__'   
+
+class VisitSerializer(serializers.ModelSerializer):
+    consultant = serializers.PrimaryKeyRelatedField(queryset=models.Consultant.objects.all())
+    customer = serializers.PrimaryKeyRelatedField(queryset=models.Auth.objects.all())
+    questions = serializers.PrimaryKeyRelatedField(queryset=models.Question.objects.all())
+
+    class Meta:
+        model = models.Visit
+        fields = '__all__'   
+
+
+
+class KindOfCounselingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.KindOfCounseling
+        fields = '__all__'   
+
