@@ -24,23 +24,23 @@ class OtpViewset  (APIView) :
         captcha = GuardPyCaptcha ()
         print (request.data)
         captcha = captcha.check_response (request.data ['encrypted_response'],request.data ['captcha'] )
-        print(captcha)
         if False :
             result = {'message' : 'کد کپچا صحیح نیست'}
             return Response (result , status= status.HTTP_406_NOT_ACCEPTABLE)
         mobile = request.data ['mobile']
+        if not mobile:
+            return Response({'message': 'شماره همراه لازم است'}, status=status.HTTP_400_BAD_REQUEST)
         try :
             user = models.Auth.objects.get(mobile = mobile)
+            result = {'registered' : True , 'message' : 'کد تایید ارسال شد'}    
+
         except models.Auth.DoesNotExist: 
-            result = {'success' : False , 'message' : 'کد تایید ارسال نشد'}    
-            return Response (result , status = status.HTTP_200_OK)
-        serialized_user = serializers.UserSerializer(user)
+            result = {'registered' : True , 'message' : 'کد تایید ارسال شد'}    
 
         code = 11111 #random.randint(10000,99999)
-        otp = models.Otp(mobile=user,code =code)
+        otp = models.Otp(mobile=mobile,code =code)
         otp.save()
 
-        result = {'success': True, 'message': 'کد تأیید ارسال شد'}
         return Response(result,status=status.HTTP_200_OK)
 
 
@@ -55,7 +55,7 @@ class LoginViewset (APIView) :
         try:
             user = models.Auth.objects.get(mobile=mobile)
         except:
-            result = {'message': 'شماره موبایل موجود نیست'}
+            result = {'message': ' شماره موبایل موجود نیست لطفا ثبت نام کنید'}
             return Response(result, status=status.HTTP_404_NOT_FOUND)
         
         try:
@@ -68,7 +68,8 @@ class LoginViewset (APIView) :
         if otp['code']== None :
             result = {'message': 'کد تأیید نامعتبر است'}
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
-        
+            
+        otp = serializers.OtpSerializer(otp_obj).data
         dt = datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(otp['date'].replace("Z", "+00:00"))
         
         dt = dt.total_seconds()
@@ -98,7 +99,8 @@ class AuthCreateView(generics.CreateAPIView):
 
     def post(self, request):
         mobile = request.data.get('mobile')
-        user = models.Auth.objects.filter(mobile=mobile).first()
+        code = request.data.get('code')
+        user = models.Auth.objects.filter(mobile=mobile ).first()
 
         if user:
             return Response({'message': 'شماره موبایل موجود است'}, status=status.HTTP_400_BAD_REQUEST)

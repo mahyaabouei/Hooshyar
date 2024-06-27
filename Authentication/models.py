@@ -21,7 +21,7 @@ class Auth (models.Model) :
     
 
 class Otp (models.Model) :
-    mobile = models.ForeignKey(Auth,to_field="mobile" , on_delete=models.CASCADE) 
+    mobile = models.CharField(max_length=200) 
     code  = models.IntegerField ()
     date = models.DateTimeField (auto_now_add = True)
 
