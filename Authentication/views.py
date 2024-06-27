@@ -91,6 +91,24 @@ class LoginViewset (APIView) :
     
     
 
+# Sign up
+class AuthCreateView(generics.CreateAPIView):
+    queryset = models.Auth.objects.all()
+    serializer_class = serializers.AuthSerializer
+
+    def post(self, request):
+        mobile = request.data.get('mobile')
+        user = models.Auth.objects.filter(mobile=mobile).first()
+
+        if user:
+            return Response({'message': 'شماره موبایل موجود است'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

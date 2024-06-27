@@ -19,10 +19,16 @@ class OtpSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class AuthSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Auth
+        fields = '__all__'   
 
 
 class ConsultantSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Consultant
         fields = '__all__'   
+
+
 
