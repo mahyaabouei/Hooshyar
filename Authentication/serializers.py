@@ -9,8 +9,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Auth
-        fields = ['id', 'name', 'last_name', 'national_code', 'phone', 'email']
-
+        fields = '__all__'
 
 
 class OtpSerializer(serializers.ModelSerializer):

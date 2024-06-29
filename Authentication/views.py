@@ -9,9 +9,8 @@ import datetime
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from rest_framework.permissions import IsAuthenticated
-
-
-
+from .serializers import UserSerializer
+from . import fun
 class CaptchaViewset (APIView) :
     def get (self , request) :
         captcha = GuardPyCaptcha()
@@ -22,7 +21,7 @@ class CaptchaViewset (APIView) :
 class OtpViewset  (APIView) :
     def post (self , request) : 
         captcha = GuardPyCaptcha ()
-        print (request.data)
+
         captcha = captcha.check_response (request.data ['encrypted_response'],request.data ['captcha'] )
         if False :
             result = {'message' : 'کد کپچا صحیح نیست'}
@@ -35,7 +34,7 @@ class OtpViewset  (APIView) :
             result = {'registered' : True , 'message' : 'کد تایید ارسال شد'}    
 
         except models.Auth.DoesNotExist: 
-            result = {'registered' : True , 'message' : 'کد تایید ارسال شد'}    
+            result = {'registered' : False , 'message' : 'کد تایید ارسال شد'}    
 
         code = 11111 #random.randint(10000,99999)
         otp = models.Otp(mobile=mobile,code =code)
@@ -83,11 +82,13 @@ class LoginViewset (APIView) :
         except models.Auth.DoesNotExist:
             return Response({'message': 'کاربری با این شماره همراه وجود ندارد'}, status=status.HTTP_404_NOT_FOUND)
         
+        
         otp_obj.delete()
-        refresh = RefreshToken.for_user(user)
+        token = fun.encryptionUser(user)
+
         return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
+
+            'access': token,
         }, status=status.HTTP_200_OK)
     
     
@@ -128,3 +129,32 @@ class ConsultantDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.Consultant.objects.all()
     serializer_class = serializers.ConsultantSerializer
     permission_classes = [IsAuthenticated]
+
+# User Profile All
+class UserListCreateView(generics.ListCreateAPIView):
+    queryset = models.Auth.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+# User Profile 
+class UserProfileView(APIView):
+    def get(self , request):
+        Authorization = request.headers['Authorization']
+        if not Authorization:
+            return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = fun.decryptionUser(Authorization)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        user_instance = user.first()
+        serializer = UserSerializer(user_instance)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+
+    
+
+
+
+
+
+

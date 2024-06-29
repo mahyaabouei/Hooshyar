@@ -20,6 +20,7 @@ class Auth (models.Model) :
         return f'{username} {national_code}'
     
 
+
 class Otp (models.Model) :
     mobile = models.CharField(max_length=200) 
     code  = models.IntegerField ()

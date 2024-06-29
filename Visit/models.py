@@ -35,5 +35,6 @@ class Visit(models.Model):
         return f'{self.customer} - {self.consultant}'
 
 class KindOfCounseling(models.Model):
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=100 , unique= True)
     price = models.IntegerField()
+    icon = models.ImageField(upload_to='Hooshyar/Static/images/' , blank=True, null=True)
