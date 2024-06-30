@@ -11,6 +11,10 @@ import requests
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from . import fun
+
+
+
+
 class CaptchaViewset (APIView) :
     def get (self , request) :
         captcha = GuardPyCaptcha()
@@ -119,16 +123,28 @@ class AuthCreateView(generics.CreateAPIView):
 
 
 # Consultant
-class ConsultantListCreateView(generics.ListCreateAPIView):
-    queryset = models.Consultant.objects.all()
-    serializer_class = serializers.ConsultantSerializer
-    permission_classes = [IsAuthenticated]
+class ConsultantViewset(APIView) :
+    def get (self , request) :
+        Authorization = request.headers.get('Authorization')
+        if not Authorization:
+            return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = fun.decryptionUser(Authorization)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+        consultant = models.Consultant.objects.all()
+        if not consultant.exists():
+            return Response([], status=status.HTTP_200_OK)
+        
+        serializer = serializers.ConsultantSerializer(consultant, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-# Consultant
-class ConsultantDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.Consultant.objects.all()
-    serializer_class = serializers.ConsultantSerializer
-    permission_classes = [IsAuthenticated]
+
+
+
+   
 
 # User Profile All
 class UserListCreateView(generics.ListCreateAPIView):
@@ -149,9 +165,6 @@ class UserProfileView(APIView):
         user_instance = user.first()
         serializer = UserSerializer(user_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)
-    
-
-    
 
 
 

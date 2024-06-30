@@ -1,11 +1,9 @@
 from django.urls import path
-from .views import VisitDetailView , VisitListCreateView , QuestionDetailView , QuestionListCreateView , KindOfCounselingDetailView , KindOfCounselingListCreateView
+from .views import  VisitViewset , QuestionViewset , KindOfCounselingViewset 
 urlpatterns = [
-    path('visit/',VisitListCreateView.as_view(), name='visit'),
-    path('visit/<int:pk>/',VisitDetailView.as_view(), name='visit'),
-    path('question/',QuestionListCreateView.as_view(), name='question'),
-    path('kindofcounseling/',KindOfCounselingListCreateView.as_view(), name='kindofcounseling'),
-    path('kindofcounseling/<int:pk>/',KindOfCounselingDetailView.as_view(), name='kindofcounseling')
+    path('visit/',VisitViewset.as_view(), name='visit'),
+    path('question/',QuestionViewset.as_view(), name='question'),
+    path('kindofcounseling/',KindOfCounselingViewset.as_view(), name='kindofcounseling'),
 
 ]
 

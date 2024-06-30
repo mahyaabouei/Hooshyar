@@ -4,6 +4,9 @@ from cryptography.fernet import Fernet
 import base64
 from . import models
 from ast import literal_eval
+
+
+
 def encryptionUser(user):
     user = serializers.UserSerializer(user).data
     user = str(user)
