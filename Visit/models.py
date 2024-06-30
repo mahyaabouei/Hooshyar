@@ -1,11 +1,30 @@
 from django.db import models
 from django.utils import timezone
 from Authentication.models import Auth, Consultant
-# from Pay.models import Invoice
 from django_summernote.fields import SummernoteTextField
 
 class Question(models.Model):
-    question = models.CharField(max_length=500)
+    question_choices = [
+        (1,'a'),
+        (2,'b'),
+        (3,'c'),
+        (4,'d'),
+        (5,'e'),
+        (6,'f'),
+        (7,'g'),
+        (8,'h'),
+        (9,'j'),
+        (10,'k'),
+    ]
+    question_1 = models.IntegerField()
+    question_2 = models.IntegerField(choices=question_choices)
+    question_4 = models.IntegerField(choices=question_choices)
+    question_5 = models.IntegerField(choices=question_choices)
+    question_6 = models.IntegerField(choices=question_choices)
+    question_7 = models.IntegerField(choices=question_choices)
+    question_8 = models.IntegerField(choices=question_choices)
+    question_9 = models.IntegerField(choices=question_choices)
+    question_10 = models.IntegerField(choices=question_choices)
 
 class Visit(models.Model):
     customer = models.ForeignKey(Auth, on_delete=models.CASCADE)
