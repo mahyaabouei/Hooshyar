@@ -15,7 +15,7 @@ from Visit.serializers import KindOfCounselingSerializer
 
 
 class PayViewset(APIView):
-    def get(self, request, kind , code):
+    def get(self, request, kind ):
             Authorization = request.headers.get('Authorization')
             if not Authorization:
                 return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
@@ -24,34 +24,41 @@ class PayViewset(APIView):
             if not user:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
             
+            code = request.data.get('code')
+            
             kindofcounseling = KindOfCounseling.objects.filter(id=kind).first()
             serializer_kindofcounseling = KindOfCounselingSerializer(kindofcounseling)
             result = {'price' :int (serializer_kindofcounseling.data['price'])}
-   
+
+            off = 0
+            try :
                  
-            discount = models.Discount.objects.filter(code=code).first()
-            serializer_discount= serializers.DiscountSerializer(discount)
+                discount = models.Discount.objects.filter(code=code).first()
+                serializer_discount= serializers.DiscountSerializer(discount)
 
-            expire_discount = serializer_discount.data ['expiration_date']
-            expire_discount =datetime.datetime.strptime (serializer_discount.data ['expiration_date'] , "%Y-%m-%dT%H:%M:%SZ").date()
-            now = datetime.datetime.now().date()
-            serializer_discount= serializers.DiscountSerializer(discount)
-            number_of_times = serializer_discount.data['number_of_times']
+                expire_discount = serializer_discount.data ['expiration_date']
+                expire_discount =datetime.datetime.strptime (serializer_discount.data ['expiration_date'] , "%Y-%m-%dT%H:%M:%SZ").date()
+                now = datetime.datetime.now().date()
 
-            # فعلا تعداد دفعات بیشتر از 0  میزاریم بعدش درست میکنیم 
-            if number_of_times > 0 :
-                 
-                if expire_discount >  now  :
+                serializer_discount= serializers.DiscountSerializer(discount)
+                number_of_times = serializer_discount.data['number_of_times']
 
-                    if serializer_discount.data['kind'] == 'per' :
-                        per = int(serializer_discount.data ['amount'])/100
-                        per = min (1,per)
-                        off= int (per * result['price'])
-                    else :
-                        value = int(serializer_discount.data ['amount'])
-                        off = min(value , result['price'])
-                else :
-                    off = 0
+
+                    # فعلا تعداد دفعات بیشتر از 0  میزاریم بعدش درست میکنیم
+                        
+                if number_of_times > 0 and discount :
+                    
+                    if expire_discount >  now  :
+
+                        if serializer_discount.data['kind'] == 'per' :
+                            per = int(serializer_discount.data ['amount'])/100
+                            per = min (1,per)
+                            off= int (per * result['price'])
+                        else :
+                            value = int(serializer_discount.data ['amount'])
+                            off = min(value , result['price'])
+            except :
+                pass
 
             result ['off']= off
             result['final_price'] = result['price'] - off
@@ -59,6 +66,15 @@ class PayViewset(APIView):
             result['pey'] = int(result['final_price'] + result ['tax'])
             return Response(result, status=status.HTTP_200_OK)           
     
+
+
+
+
+
+
+
+
+
 
 
 
