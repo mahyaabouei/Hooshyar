@@ -1,8 +1,7 @@
 from django.urls import path
-from .views import DiscountListCreateView , DiscountDetailView
+from .views import PayViewset 
 
 urlpatterns = [
-    path('discount/', DiscountListCreateView.as_view(), name='discount'),
-    path('discount/<int:pk>/',DiscountDetailView.as_view(), name='discount')
+    path('perpay/<int:kind>/<str:code>/', PayViewset.as_view(), name='perpay'),
 
 ]
