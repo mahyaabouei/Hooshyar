@@ -18,6 +18,7 @@ class Question(models.Model):
     ]
     question_1 = models.IntegerField()
     question_2 = models.IntegerField(choices=question_choices)
+    question_3 = models.IntegerField(choices=question_choices)
     question_4 = models.IntegerField(choices=question_choices)
     question_5 = models.IntegerField(choices=question_choices)
     question_6 = models.IntegerField(choices=question_choices)
@@ -26,12 +27,19 @@ class Question(models.Model):
     question_9 = models.IntegerField(choices=question_choices)
     question_10 = models.IntegerField(choices=question_choices)
 
+class KindOfCounseling(models.Model):
+    title = models.CharField(max_length=100 , unique= True)
+    price = models.IntegerField()
+    icon = models.ImageField(upload_to='Hooshyar/Static/images/' , blank=True, null=True)
+
+
 class Visit(models.Model):
     customer = models.ForeignKey(Auth, on_delete=models.CASCADE)
     consultant = models.ForeignKey(Consultant, on_delete=models.CASCADE)
     questions = models.ForeignKey(Question, on_delete=models.CASCADE)
-    date = models.DateTimeField(default=timezone.now)
+    create_at = models.DateTimeField(default=timezone.now)
     cost = models.IntegerField()
+    kind = models.ForeignKey(KindOfCounseling ,on_delete=models.CASCADE ) 
     RATING_CHOICES = [
         (1, '1'),
         (2, '2'),
@@ -52,8 +60,3 @@ class Visit(models.Model):
 
     def __str__(self):
         return f'{self.customer} - {self.consultant}'
-
-class KindOfCounseling(models.Model):
-    title = models.CharField(max_length=100 , unique= True)
-    price = models.IntegerField()
-    icon = models.ImageField(upload_to='Hooshyar/Static/images/' , blank=True, null=True)

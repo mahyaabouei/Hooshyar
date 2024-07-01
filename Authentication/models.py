@@ -34,6 +34,8 @@ class Consultant (models.Model) :
     national_code = models.CharField(max_length=200)
     phone = models.CharField(max_length=200)
     email = models.EmailField(unique=True , null=True , blank=True)
+    rank = models.IntegerField()
+    postion = models.CharField(max_length=100)
     profile_photo = models.ImageField(upload_to='Hooshyar/Static/images/' , blank=True, null=True)
 
     def __str__(self):
