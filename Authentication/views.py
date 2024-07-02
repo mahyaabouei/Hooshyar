@@ -21,7 +21,7 @@ class CaptchaViewset (APIView) :
         captcha = captcha.Captcha_generation (num_char = 4 , only_num = True) 
         return Response (captcha , status = status.HTTP_200_OK)
     
-
+# Otp as User
 class OtpViewset  (APIView) :
     def post (self , request) : 
         captcha = GuardPyCaptcha ()
@@ -46,7 +46,7 @@ class OtpViewset  (APIView) :
 
         return Response(result,status=status.HTTP_200_OK)
 
-
+# Login as user 
 class LoginViewset (APIView) :
     def post (self,request) :
         mobile = request.data.get('mobile')
@@ -84,7 +84,7 @@ class LoginViewset (APIView) :
         try:
             user = models.Auth.objects.get(mobile=mobile)
         except models.Auth.DoesNotExist:
-            return Response({'message': 'کاربری با این شماره همراه وجود ندارد'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message': 'کاربری با این شماره همراه وجود ندارد'}, status=status.HTTP_400_BAD_REQUEST)
         
         
         otp_obj.delete()
@@ -95,7 +95,48 @@ class LoginViewset (APIView) :
             'access': token,
         }, status=status.HTTP_200_OK)
     
+
+
+
+# Otp as Consultant
+class OtpConsultant (APIView) :
+    def post (self, request) :
+        captcha = GuardPyCaptcha()
+        captcha = captcha.check_response(request.data['encrypted_response'] , request.data ['captcha'])
+        if False :
+            return Response({'message' : 'کد کپچا صحیح نیست'} , status=status.HTTP_406_NOT_ACCEPTABLE)
+        mobile = request.data ['mobile']
+        if not mobile :
+            return Response({'message' : 'شماره همراه مشاور لازم است'})
+        try :
+            consultant = models.Consultant.objects.get(phone = mobile)
+            result = {'registered' : True , 'message' : 'کد تایید ارسال شد'}
+        except models.Consultant.DoesNotExist:
+            result = {'registered' : False , 'message' : 'مشاور با این شماره همراه وجود ندارد'}
+
+        code = 11111
+        otp = models.Otp(mobile = mobile , code = code)
+        otp.save()
+        return Response (result , status=status.HTTP_200_OK)
+
+        
     
+
+# Login as Consultant 
+class LoginConsultant (APIView) :
+    def post (self,request) :
+        mobile = request.data('mobile')
+        code = request.data('code')
+        if not mobile or not code :
+            return Response ({'message' : 'کد تایید و شماره همراه الزامی است '} , status=status.HTTP_406_NOT_ACCEPTABLE)
+        try :
+            consultant = models.Otp.objects.get(phone = mobile)
+        except :
+            result = {'message' : 'مشاور با این شماره همراه ثبت نام نشده است لطفا ثبت نام کنید'}
+            return Response (result , status=status.HTTP_404_NOT_FOUND)
+        
+        pass
+
 
 # Sign up
 class AuthCreateView(generics.CreateAPIView):
