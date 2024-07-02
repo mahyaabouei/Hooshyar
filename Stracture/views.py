@@ -2,7 +2,6 @@ from django.shortcuts import render
 from rest_framework import status , generics
 from . import models
 from . import serializers
-import datetime
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from rest_framework.permissions import IsAuthenticated
@@ -11,8 +10,18 @@ from rest_framework.response import Response
 from Authentication import fun
 import pandas as pd
 from .fun import groupingTime
+from persiantools.jdatetime import JalaliDate
+import datetime
 
 
+def date_str_to(date):
+    return datetime.datetime.strptime(date,"%Y-%m-%d")
+
+def date_to_jalali(date):
+    return str(JalaliDate(date))
+
+def date_to_weekday(date):
+    return date.weekday()
 
 
 class SelectTimeViewset(APIView):
@@ -33,9 +42,10 @@ class SelectTimeViewset(APIView):
             df = df.groupby('date').apply(groupingTime)
             df = df.reset_index()
             df = df[['date','time']]
+            df['date'] = df['date'].apply(date_str_to)
+            df['jalali'] = df['date'].apply(date_to_jalali)
+            df['weekday'] = df['date'].apply(date_to_weekday)
             df = df.to_dict('records')
             return Response(df, status=status.HTTP_200_OK)
     
-
-
 

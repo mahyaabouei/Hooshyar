@@ -147,11 +147,6 @@ class ConsultantViewset(APIView) :
 
    
 
-# User Profile All
-class UserListCreateView(generics.ListCreateAPIView):
-    queryset = models.Auth.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
 
 # User Profile 
 class UserProfileView(APIView):
@@ -166,6 +161,24 @@ class UserProfileView(APIView):
         user_instance = user.first()
         serializer = UserSerializer(user_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)
+
+
+    def put (self,request) :
+        Authorization = request.headers['Authorization']
+        if not Authorization:
+            return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = fun.decryptionUser(Authorization)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        user_instance = user.first()
+
+        serializer = UserSerializer(user_instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 

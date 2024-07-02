@@ -43,20 +43,29 @@ class VisitViewset(APIView):
                 question_9 = question['8'] ,
                 question_10 = question['9'] )
             question_model.save()
+            serializer_question = serializers.QuestionSerializer(question_model)
+
 
             kind = models.KindOfCounseling.objects.filter(id= request.data.get ('kind'))
             if not kind.exists() :
                 return Response ('no kind', status=status.HTTP_400_BAD_REQUEST)
             kind = kind.first()
-            serializer_kind = serializers.KindOfCounselingSerializer (kind , many =True)
-            # survey = models.Visit.objects.filter(survey=survey)            
+            serializer_kind = serializers.KindOfCounselingSerializer (kind)
+            print(serializer_kind.data)
+        #     response = {
+        #     'consultant': serializer_consultant.data,
+        #     'questions': serializer_question.data,
+        #     'kind': serializer_kind.data
+        # }
+            visit_model = models.Visit(customer=user , consultant =consultant  ,kind = kind, questions = question_model)
+            visit_model.save()
+            return Response({'ok'}, status=status.HTTP_201_CREATED)
 
-
-
-
-
-            return Response([],status=status.HTTP_200_OK)
     
+
+
+
+
     def get(self, request):
     
         Authorization = request.headers.get('Authorization')

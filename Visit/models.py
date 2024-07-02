@@ -38,7 +38,7 @@ class Visit(models.Model):
     consultant = models.ForeignKey(Consultant, on_delete=models.CASCADE)
     questions = models.ForeignKey(Question, on_delete=models.CASCADE)
     create_at = models.DateTimeField(default=timezone.now)
-    cost = models.IntegerField()
+    # cost = models.IntegerField()
     kind = models.ForeignKey(KindOfCounseling ,on_delete=models.CASCADE ) 
     RATING_CHOICES = [
         (1, '1'),
@@ -47,16 +47,16 @@ class Visit(models.Model):
         (4, '4'),
         (5, '5'),
     ]
-    survey = models.IntegerField(choices=RATING_CHOICES)
+    survey = models.IntegerField(choices=RATING_CHOICES , null=True , blank= True)
     # invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-    note = SummernoteTextField()
+    note = models.CharField( max_length=2000 , null=True , blank= True)
     OPTION_Status = [
         ('completing', 'completing'),
         ('waiting', 'waiting'),
         ('done', 'done'),
         ('cancel', 'cancel'),
     ]
-    status = models.CharField(max_length=20, choices=OPTION_Status)
+    status = models.CharField(max_length=20, choices=OPTION_Status , default='completing')
 
     def __str__(self):
         return f'{self.customer} - {self.consultant}'
