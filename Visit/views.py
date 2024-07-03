@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from Authentication import fun
 from Authentication.serializers import UserSerializer , ConsultantSerializer
+from Stracture.serializers import SelectTimeSerializer
 
 
 # Visit
@@ -51,19 +52,25 @@ class VisitViewset(APIView):
                 return Response ('no kind', status=status.HTTP_400_BAD_REQUEST)
             kind = kind.first()
             serializer_kind = serializers.KindOfCounselingSerializer (kind)
-            print(serializer_kind.data)
-        #     response = {
-        #     'consultant': serializer_consultant.data,
-        #     'questions': serializer_question.data,
-        #     'kind': serializer_kind.data
-        # }
-            visit_model = models.Visit(customer=user , consultant =consultant  ,kind = kind, questions = question_model)
+
+            date_str = request.data.get('date')
+            time = request.data.get ('time')
+            if not date_str:
+                return Response({'error': 'No date provided'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                date_str = datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
+            except:
+                return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+            date = models.SelectTime.objects.filter(date =date_str , time =time , reserve = False )
+            if not date.exists () :
+                return Response ({'no date'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            date = date.first()
+
+            visit_model = models.Visit(customer=user , consultant =consultant  ,kind = kind, questions = question_model , date = date)
             visit_model.save()
+            models.SelectTime.objects.filter(id=date.id).update(reserve=True)
+            
             return Response({'ok'}, status=status.HTTP_201_CREATED)
-
-    
-
-
 
 
     def get(self, request):
@@ -161,7 +168,6 @@ class VisitProfileView(APIView):
         user_instance = user.first()
         serializer = serializers.VisitSerializer(user_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)
-
 
 
 

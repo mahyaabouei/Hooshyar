@@ -24,7 +24,7 @@ class PayViewset(APIView):
             if not user:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
             
-            code = request.data.get('code')
+            code = request.query_params.get('code')
             
             kindofcounseling = KindOfCounseling.objects.filter(id=kind).first()
             serializer_kindofcounseling = KindOfCounselingSerializer(kindofcounseling)
@@ -79,7 +79,8 @@ class DiscountViewset (APIView) :
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        code_discount = request.data.get('code')
+        code_discount = request.query_params.get('code')
+
         if not code_discount :
             return Response ({'message' : 'کد تخفیف را وراد کنید'},status=status.HTTP_406_NOT_ACCEPTABLE)
         code_check = models.Discount.objects.filter(code = code_discount).first()
@@ -94,7 +95,7 @@ class DiscountViewset (APIView) :
         number_of_times = serializer_discount.data['number_of_times']
 
 
-            # فعلا تعداد دفعات بیشتر از 0  میزاریم بعدش درست میکنیم
+        # فعلا تعداد دفعات بیشتر از 0  میزاریم بعدش درست میکنیم
                 
         if number_of_times > 0 and expire_discount >  now :
             return Response({'message': 'کد تخفیف معتبر است'}, status=status.HTTP_200_OK)

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from Authentication.models import Auth, Consultant
+from Stracture.models import SelectTime
 from django_summernote.fields import SummernoteTextField
 
 class Question(models.Model):
@@ -57,6 +58,8 @@ class Visit(models.Model):
         ('cancel', 'cancel'),
     ]
     status = models.CharField(max_length=20, choices=OPTION_Status , default='completing')
+    date = models.ForeignKey(SelectTime , on_delete=models.CASCADE)
+    
 
     def __str__(self):
         return f'{self.customer} - {self.consultant}'

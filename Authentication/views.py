@@ -53,7 +53,7 @@ class LoginViewset (APIView) :
         code = request.data.get('code')
         
         if not mobile or not code:
-            return Response({'message': 'شماره همراه و کد تأیید لازم است'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'شماره همراه و کد تأیید الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             user = models.Auth.objects.get(mobile=mobile)
@@ -125,17 +125,39 @@ class OtpConsultant (APIView) :
 # Login as Consultant 
 class LoginConsultant (APIView) :
     def post (self,request) :
-        mobile = request.data('mobile')
-        code = request.data('code')
+        mobile = request.data.get('mobile')
+        code = request.data.get('code')
+        
         if not mobile or not code :
             return Response ({'message' : 'کد تایید و شماره همراه الزامی است '} , status=status.HTTP_406_NOT_ACCEPTABLE)
         try :
-            consultant = models.Otp.objects.get(phone = mobile)
+            consultant = models.Consultant.objects.get(phone = mobile)
         except :
             result = {'message' : 'مشاور با این شماره همراه ثبت نام نشده است لطفا ثبت نام کنید'}
             return Response (result , status=status.HTTP_404_NOT_FOUND)
+        try :
+            code_otp = models.Otp.objects.filter(code=code , mobile=mobile).order_by('-date').first()
+        except:
+            return Response ({'message' : ' 1 کد تایید نامعتبر است'},status=status.HTTP_400_BAD_REQUEST)
         
-        pass
+        otp = serializers.OtpSerializer(code_otp).data
+        if otp ['code'] == None :
+            return Response ({'message' : ' 2 کد تایید نامعتبر است'} , status=status.HTTP_400_BAD_REQUEST)
+        now = datetime.datetime.now(datetime.timezone.utc)
+        otp_date = datetime.datetime.fromisoformat(otp['date'].replace("Z", "+00:00"))
+        dt = now-otp_date
+        dt = dt.total_seconds()
+        if dt >120 :
+            return Response ({'message' : 'زمان کد به پایان رسیده است'})
+        try :
+            consultant = models.Consultant.objects.get(phone = mobile)
+        except :
+            return Response ({'message' : 'کاربری با این شماره همراه وجود ندارد'} , status=status.HTTP_404_NOT_FOUND)
+        code_otp.delete()
+
+        token = fun.encryptionConsultant(consultant)
+        
+        return Response ({'access' : token} , status=status.HTTP_200_OK)
 
 
 # Sign up
