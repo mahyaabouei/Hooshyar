@@ -11,11 +11,11 @@ from Authentication import fun
 import pandas as pd
 from .fun import groupingTime
 from persiantools.jdatetime import JalaliDate
-import datetime
-
+from datetime import datetime
+import pytz
 
 def date_str_to(date):
-    return datetime.datetime.strptime(date,"%Y-%m-%d")
+    return datetime.strptime(date,"%Y-%m-%d")
 
 def date_to_jalali(date):
     return str(JalaliDate(date))
@@ -49,3 +49,32 @@ class SelectTimeViewset(APIView):
             return Response(df, status=status.HTTP_200_OK)
     
 
+
+class SetTimeConsultant (APIView) :
+        def post (self , request) :
+            Authorization = request.headers.get('Authorization')
+            if not Authorization:
+                return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+            consultant = fun.decryptionConsultant(Authorization).first()
+            if not consultant:
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            time_stamp = request.data.get ('date')
+            print(time_stamp)
+            if not time_stamp :
+                 return Response({'message' : 'no date'} , status=status.HTTP_404_NOT_FOUND)
+            time_stamp = int (time_stamp)/1000
+            time_stamp = time_stamp = datetime.fromtimestamp(time_stamp)
+            date = time_stamp.date()
+            time = time_stamp.hour
+            set_date = models.SelectTime.objects.filter(date=date ,time=time)
+            if set_date.exists () :
+                 return Response ({'message' : 'این تاریخ از قبل تعین شده است'} , status=status.HTTP_406_NOT_ACCEPTABLE)
+            set_time_model = models.SelectTime (consultant=consultant , date =date , time = time)
+            set_time_model.save()
+            
+
+            print(date)
+            print(time)
+            return Response ({'message' : 'زمان مشاوره ثبت شد'},status=status.HTTP_200_OK)

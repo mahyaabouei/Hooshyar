@@ -87,7 +87,7 @@ class VisitViewset(APIView):
         visits = models.Visit.objects.filter(customer=user_instance)
         
         if not visits.exists():
-            return Response([], status=status.HTTP_200_OK)
+            return Response({'message' : 'کاربر ویزیت ندارد'}, status=status.HTTP_404_NOT_FOUND)
         
         serializer = serializers.VisitSerializer(visits, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
