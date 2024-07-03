@@ -58,7 +58,7 @@ class SetTimeConsultant (APIView) :
 
             consultant = fun.decryptionConsultant(Authorization).first()
             if not consultant:
-                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'consultant not found'}, status=status.HTTP_404_NOT_FOUND)
             
             time_stamp = request.data.get ('date')
             print(time_stamp)
@@ -73,8 +73,5 @@ class SetTimeConsultant (APIView) :
                  return Response ({'message' : 'این تاریخ از قبل تعین شده است'} , status=status.HTTP_406_NOT_ACCEPTABLE)
             set_time_model = models.SelectTime (consultant=consultant , date =date , time = time)
             set_time_model.save()
-            
 
-            print(date)
-            print(time)
             return Response ({'message' : 'زمان مشاوره ثبت شد'},status=status.HTTP_200_OK)

@@ -11,7 +11,33 @@ from rest_framework.response import Response
 from Authentication import fun
 from Authentication.serializers import UserSerializer , ConsultantSerializer
 from Stracture.serializers import SelectTimeSerializer
+import pandas as pd
+from persiantools.jdatetime import JalaliDate
 
+
+
+
+def date_to_jalali(date):
+    return str(JalaliDate(date))
+
+def timefromid (id) :
+    time = models.SelectTime.objects.filter(id=id).first()
+    return time.time
+
+
+def datefromid (id) :
+    date =models.SelectTime.objects.filter(id=id).first()
+    date = str(date_to_jalali(date.date))
+    return date
+
+def consultantfromid (id) :
+    consultant = models.Consultant.objects.filter(id=id).first()
+    return consultant.name + ' ' + consultant.last_name
+
+
+def  kindfromid (id) :
+    kind = models.KindOfCounseling.objects.filter(id=id).first()
+    return kind.title
 
 # Visit
 class VisitViewset(APIView):
@@ -30,6 +56,7 @@ class VisitViewset(APIView):
             if not consultant.exists ():
                 return Response('no consultant', status=status.HTTP_400_BAD_REQUEST)
             consultant = consultant.first()
+            
             serializer_consultant = ConsultantSerializer(consultant,)
             question = request.data.get('questions')
             question_model = models.Question(
@@ -61,16 +88,19 @@ class VisitViewset(APIView):
                 date_str = datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
             except:
                 return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+            print(date_str)
+            print(time)
             date = models.SelectTime.objects.filter(date =date_str , time =time , reserve = False )
             if not date.exists () :
                 return Response ({'no date'}, status=status.HTTP_406_NOT_ACCEPTABLE)
             date = date.first()
 
             visit_model = models.Visit(customer=user , consultant =consultant  ,kind = kind, questions = question_model , date = date)
+
             visit_model.save()
             models.SelectTime.objects.filter(id=date.id).update(reserve=True)
             
-            return Response({'ok'}, status=status.HTTP_201_CREATED)
+            return Response({}, status=status.HTTP_201_CREATED)
 
 
     def get(self, request):
@@ -90,7 +120,31 @@ class VisitViewset(APIView):
             return Response({'message' : 'کاربر ویزیت ندارد'}, status=status.HTTP_404_NOT_FOUND)
         
         serializer = serializers.VisitSerializer(visits, many=True)
+        df = pd.DataFrame(serializer.data)
+        df['consultant'] = df ['consultant'].apply(consultantfromid)
+        df['time'] = df ['date'].apply(timefromid)
+        df['date'] = df ['date'].apply(datefromid)
+        df['kind'] = df ['kind'].apply(kindfromid)
+        print(df)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+class VisitConsultations (APIView) :
+    def get(self ,request) :
+        Authorization = request.headers['Authorization']
+        if not Authorization:
+            return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        consultant_instance = fun.decryptionConsultant(Authorization).first()  
+        if not consultant_instance:
+            return Response({'error': 'consultant not found'}, status=status.HTTP_404_NOT_FOUND)
+        visit = models.Visit.objects.filter(consultant =consultant_instance)
+        visit = [serializers.VisitSerializer(x).data for x in visit]
+        return Response (visit,status=status.HTTP_200_OK)
+        
+
 
 
 # Question
