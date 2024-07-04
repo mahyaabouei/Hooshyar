@@ -4,7 +4,7 @@ urlpatterns = [
     path('visit/',VisitViewset.as_view(), name='visit'),
     path('question/',QuestionViewset.as_view(), name='question'),
     path('kindofcounseling/',KindOfCounselingViewset.as_view(), name='kindofcounseling'),
-    path('visitconsultations/',VisitConsultations.as_view(), name='visit-consultations-list'),
+    path('visit/consultations/',VisitConsultations.as_view(), name='visit-consultations-list'),
 
 ]
 

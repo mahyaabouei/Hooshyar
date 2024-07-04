@@ -39,6 +39,10 @@ def  kindfromid (id) :
     kind = models.KindOfCounseling.objects.filter(id=id).first()
     return kind.title
 
+def userfromid (id) :
+    user = models.Auth.objects.filter(id=id).first()
+    return user.name + ' ' + user.last_name
+
 # Visit
 class VisitViewset(APIView):
 
@@ -88,11 +92,11 @@ class VisitViewset(APIView):
                 date_str = datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
             except:
                 return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
-            print(date_str)
-            print(time)
+
             date = models.SelectTime.objects.filter(date =date_str , time =time , reserve = False )
             if not date.exists () :
-                return Response ({'no date'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response ({'maybe the date, time is booked or the time is not available'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+           
             date = date.first()
 
             visit_model = models.Visit(customer=user , consultant =consultant  ,kind = kind, questions = question_model , date = date)
@@ -100,7 +104,7 @@ class VisitViewset(APIView):
             visit_model.save()
             models.SelectTime.objects.filter(id=date.id).update(reserve=True)
             
-            return Response({}, status=status.HTTP_201_CREATED)
+            return Response({'message' : 'your visit set'}, status=status.HTTP_201_CREATED)
 
 
     def get(self, request):
@@ -117,17 +121,24 @@ class VisitViewset(APIView):
         visits = models.Visit.objects.filter(customer=user_instance)
         
         if not visits.exists():
-            return Response({'message' : 'کاربر ویزیت ندارد'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message' : 'The user does not have a visit'}, status=status.HTTP_404_NOT_FOUND)
         
         serializer = serializers.VisitSerializer(visits, many=True)
+
         df = pd.DataFrame(serializer.data)
         df['consultant'] = df ['consultant'].apply(consultantfromid)
         df['time'] = df ['date'].apply(timefromid)
         df['date'] = df ['date'].apply(datefromid)
         df['kind'] = df ['kind'].apply(kindfromid)
-        print(df)
+        df['customer'] = df ['customer'].apply(userfromid)
+        df = df.drop(columns='create_at')
+        df['survey'] = df ['survey'].fillna(0)
+        df['note'] = df ['note'].fillna('')
+        df = df.to_dict('records')
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(df, status=status.HTTP_200_OK)
+
+
 
 
 
@@ -139,11 +150,23 @@ class VisitConsultations (APIView) :
             return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
         consultant_instance = fun.decryptionConsultant(Authorization).first()  
         if not consultant_instance:
-            return Response({'error': 'consultant not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Consultant not found'}, status=status.HTTP_404_NOT_FOUND)
         visit = models.Visit.objects.filter(consultant =consultant_instance)
         visit = [serializers.VisitSerializer(x).data for x in visit]
-        return Response (visit,status=status.HTTP_200_OK)
+        df = pd.DataFrame(visit)
+        print(df)
+        df ['consultant'] = df['consultant'].apply(consultantfromid)
+        df ['customer'] = df['customer'].apply(userfromid)
+        df ['kind'] = df['kind'].apply(kindfromid)
+        df ['date'] = df['date'].apply(datefromid)
+        df.insert(loc=10, column='time', value='')
+        df = df.drop(columns='create_at')
+        df['survey'] = df['survey'].fillna(0)
+        df['note'] = df['note'].fillna('')
+        df =df.to_dict('records')
+        return Response (df,status=status.HTTP_200_OK)
         
+
 
 
 
@@ -209,19 +232,6 @@ class KindOfCounselingViewset(APIView):
 
 
 
-# Visit Profile 
-class VisitProfileView(APIView):
-    def get(self , request):
-        Authorization = request.headers['Authorization']
-        if not Authorization:
-            return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = fun.decryptionUser(Authorization)
-        if not user:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        user_instance = user.first()
-        serializer = serializers.VisitSerializer(user_instance)
-        return Response(serializer.data,status=status.HTTP_200_OK)
 
 
 
