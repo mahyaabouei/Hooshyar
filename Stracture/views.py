@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from Authentication import fun
 import pandas as pd
-from .fun import groupingTime
+from .fun import groupingTimeNoReserve, groupingTime
 from persiantools.jdatetime import JalaliDate
 from datetime import datetime
 import pytz
@@ -37,13 +37,17 @@ class SelectTimeUserViewset(APIView):
             if not user:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
             
-            times = models.SelectTime.objects.filter(consultant_id=pk).order_by('date', 'time' , 'reserve')
+            times = models.SelectTime.objects.filter(consultant_id=pk,reserve=False).order_by('date', 'time' , 'reserve')
             if not times.exists():
                 return Response([], status=status.HTTP_200_OK)
             df = [serializers.SelectTimeSerializer(x).data for x in times]
             df = pd.DataFrame(df)
-            df = df.groupby('date').apply(groupingTime)
+            df = df.groupby('date').apply(groupingTimeNoReserve)
+
+
             df = df.reset_index()
+            df = df.sort_values(by='date')
+            df = df[df.index<10]
             df = df[['date','time']]
             df['date'] = df['date'].apply(date_str_to)
             df['jalali'] = df['date'].apply(date_to_jalali)
@@ -73,7 +77,6 @@ class SelectTimeConsultantViewset(APIView):
             df = pd.DataFrame(df)
             df = df.groupby('date').apply(groupingTime)
             df = df.reset_index()
-            print(df)
             df = df[['date','time']]
             df['date'] = df['date'].apply(date_str_to)
             df['jalali'] = df['date'].apply(date_to_jalali)
@@ -118,6 +121,7 @@ class SetTimeConsultant (APIView) :
 
 
         def delete(self, request):
+                print(request.data)
                 Authorization = request.headers.get('Authorization')
                 if not Authorization:
                     return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
@@ -125,15 +129,14 @@ class SetTimeConsultant (APIView) :
                 consultant = fun.decryptionConsultant(Authorization).first()
                 if not consultant:
                     return Response({'error': 'consultant not found'}, status=status.HTTP_404_NOT_FOUND)
-                
-                time_stamp = request.data.get('date')
-                if not time_stamp:
-                    return Response({'message': 'no date'}, status=status.HTTP_404_NOT_FOUND)
-                
-                time_stamp = int(time_stamp) / 1000
-                time_stamp = datetime.fromtimestamp(time_stamp)
-                date = time_stamp.date()
-                time = time_stamp.hour
+                # 2024-07-14T00:00:00
+                date = request.query_params.get('date')
+                date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
+                time = request.query_params.get('time')
+                print(date)
+                print(time)
+                if not time or not date :
+                    return Response({'message': 'no date or no time'}, status=status.HTTP_404_NOT_FOUND)
                 
                 set_date = models.SelectTime.objects.filter(consultant=consultant, date=date, time=time)
                 if not set_date.exists():

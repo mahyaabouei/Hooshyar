@@ -11,6 +11,7 @@ class Auth (models.Model) :
     mobile = models.CharField(max_length=200,unique=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     password = models.CharField(max_length=800)
+    agreement = models.BooleanField(default=False)
     date_birth = models.DateField(null=True, blank=True)
     date_last_act = models.DateTimeField(default=timezone.now)
    
