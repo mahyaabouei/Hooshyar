@@ -16,33 +16,41 @@ from persiantools.jdatetime import JalaliDate
 
 
 
-
+# georgia date to jalali
 def date_to_jalali(date):
     return str(JalaliDate(date))
 
+# id to time
 def timefromid (id) :
     time = models.SelectTime.objects.filter(id=id).first()
     return time.time
 
-
+# id to date 
 def datefromid (id) :
     date =models.SelectTime.objects.filter(id=id).first()
     date = str(date_to_jalali(date.date))
     return date
 
+
+# id to consultant's name/last name
 def consultantfromid (id) :
     consultant = models.Consultant.objects.filter(id=id).first()
     return consultant.name + ' ' + consultant.last_name
 
 
+# id to kind
 def  kindfromid (id) :
     kind = models.KindOfCounseling.objects.filter(id=id).first()
     return kind.title
 
+
+# id to user's name/last name
 def userfromid (id) :
     user = models.Auth.objects.filter(id=id).first()
     return user.name + ' ' + user.last_name
 
+
+# for questions
 def questiontorisking (id):
     question = models.Question.objects.filter(id=id).first()
     serializer_question = serializers.QuestionSerializer(question).data
@@ -73,7 +81,7 @@ def questiontorisking (id):
     return [risktaking,serializer_question['question_10'],serializer_question['question_1']]
 
 
-
+# user's age
 def datebirthtoage (date) :
     date_now = datetime.datetime.now().date()
     age = date_now -date
@@ -82,9 +90,10 @@ def datebirthtoage (date) :
 
 
 
-# Visit
+# visit for user  
 class VisitViewset(APIView):
 
+    # set visit
     def post(self, request):
             Authorization = request.headers.get('Authorization')
             if not Authorization:
@@ -145,7 +154,7 @@ class VisitViewset(APIView):
             
             return Response({'message' : 'your visit set'}, status=status.HTTP_201_CREATED)
 
-
+    # show visit for user
     def get(self, request):
     
         Authorization = request.headers.get('Authorization')
@@ -181,7 +190,7 @@ class VisitViewset(APIView):
 
 
 
-
+# show visit list for consultant
 class VisitConsultationsViewset (APIView) :
     def get(self ,request) :
         Authorization = request.headers['Authorization']
@@ -206,7 +215,7 @@ class VisitConsultationsViewset (APIView) :
         return Response (df,status=status.HTTP_200_OK)
         
 
-
+# show visit detail for consultant
 class VisitConsultationsDetialViewset(APIView):
     def get(self,request ,id ) :
         Authorization = request.headers.get ('Authorization')

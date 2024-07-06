@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from Authentication.models import Consultant
 
+
 class SelectTime(models.Model):
     date = models.DateField()
     time = models.IntegerField()

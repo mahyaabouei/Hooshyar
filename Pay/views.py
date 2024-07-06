@@ -13,7 +13,7 @@ from Visit.models import KindOfCounseling
 from Visit.serializers import KindOfCounselingSerializer
 
 
-
+# show invoice before buy
 class PayViewset(APIView):
     def get(self, request, kind ):
             Authorization = request.headers.get('Authorization')
@@ -68,7 +68,7 @@ class PayViewset(APIView):
     
 
 
-
+# show and check discount code
 class DiscountViewset (APIView) :
     def get (self ,request) :
         Authorization = request.headers.get('Authorization')

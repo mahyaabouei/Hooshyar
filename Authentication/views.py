@@ -14,7 +14,7 @@ from . import fun
 
 
 
-
+# captcha
 class CaptchaViewset (APIView) :
     def get (self , request) :
         captcha = GuardPyCaptcha()
@@ -160,7 +160,7 @@ class LoginConsultant (APIView) :
         return Response ({'access' : token} , status=status.HTTP_200_OK)
 
 
-# Sign up
+# Sign up as user
 class AuthCreateView(generics.CreateAPIView):
     queryset = models.Auth.objects.all()
     serializer_class = serializers.AuthSerializer
@@ -185,7 +185,7 @@ class AuthCreateView(generics.CreateAPIView):
 
 
 
-# Consultant
+# all Consultant profile
 class ConsultantViewset(APIView) :
     def get (self , request) :
         Authorization = request.headers.get('Authorization')
@@ -213,6 +213,8 @@ class ConsultantViewset(APIView) :
 
 # User Profile 
 class UserProfileView(APIView):
+
+    # show user profile
     def get(self , request):
         Authorization = request.headers['Authorization']
         if not Authorization:
@@ -225,7 +227,7 @@ class UserProfileView(APIView):
         serializer = UserSerializer(user_instance)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
-
+    # update user profile
     def put (self,request) :
         Authorization = request.headers['Authorization']
         if not Authorization:

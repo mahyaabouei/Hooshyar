@@ -14,6 +14,8 @@ from persiantools.jdatetime import JalaliDate
 from datetime import datetime
 import pytz
 
+
+
 def date_str_to(date):
     return datetime.strptime(date,"%Y-%m-%d")
 
@@ -24,6 +26,7 @@ def date_to_weekday(date):
     return date.weekday()
 
 
+# select and show  time for user
 class SelectTimeUserViewset(APIView):
     def get(self, request, pk):
             Authorization = request.headers.get('Authorization')
@@ -52,7 +55,7 @@ class SelectTimeUserViewset(APIView):
 
 
 
-
+# show time for consultant
 class SelectTimeConsultantViewset(APIView):
     def get(self, request):
             Authorization = request.headers.get('Authorization')
@@ -80,6 +83,8 @@ class SelectTimeConsultantViewset(APIView):
     
 
 
+
+# select time for consultant
 class SetTimeConsultant (APIView) :
         def post (self , request) :
             Authorization = request.headers.get('Authorization')
