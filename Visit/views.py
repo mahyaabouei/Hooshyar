@@ -43,6 +43,43 @@ def userfromid (id) :
     user = models.Auth.objects.filter(id=id).first()
     return user.name + ' ' + user.last_name
 
+def questiontorisking (id):
+    question = models.Question.objects.filter(id=id).first()
+    serializer_question = serializers.QuestionSerializer(question).data
+    print (serializer_question)
+
+    risktaking = 0
+    if serializer_question['question_1'] <35 :
+        risktaking = risktaking + 1.5
+    elif serializer_question['question_1'] <45 :
+        risktaking = risktaking + 1
+    elif serializer_question['question_1'] <55 :
+        risktaking = risktaking + 0.5
+    elif serializer_question['question_1'] <65 :
+        risktaking = risktaking + 0
+    elif serializer_question['question_1'] <75 :
+        risktaking = risktaking  -0.5
+    elif serializer_question['question_1'] >75 :
+        risktaking = risktaking  -1
+
+    risktaking = risktaking + int( serializer_question['question_2'])
+    risktaking = risktaking + int(str( serializer_question['question_3']).replace('1', '0').replace('2', '1').replace('4', '5'))
+    risktaking = risktaking + int(str( serializer_question['question_4']).replace('1', '5').replace('2', '3').replace('3', '1').replace('4', '0'))
+    risktaking = risktaking + int(str( serializer_question['question_5']).replace('1', '0').replace('2', '1').replace('4', '5'))
+    risktaking = risktaking + int(str( serializer_question['question_6']).replace('1', '5').replace('2', '3').replace('3', '1').replace('4', '0'))
+    risktaking = risktaking + int(str( serializer_question['question_7']).replace('1', '0').replace('3', '4').replace('4', '6'))
+    risktaking = risktaking + int(str( serializer_question['question_8']).replace('1', '0').replace('2', '1').replace('3', '2').replace('4', '3'))
+    risktaking = risktaking + int(str( serializer_question['question_9']).replace('1', '0').replace('3', '4').replace('4', '6'))
+    return [risktaking,serializer_question['question_10']]
+
+def datebirthtoage (user) :
+    date_now = datetime.datetime.now()
+    date_now = datetime.datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S")
+    user = date_now - user
+    return user
+
+
+
 # Visit
 class VisitViewset(APIView):
 
@@ -60,11 +97,10 @@ class VisitViewset(APIView):
             if not consultant.exists ():
                 return Response('no consultant', status=status.HTTP_400_BAD_REQUEST)
             consultant = consultant.first()
-            
-            serializer_consultant = ConsultantSerializer(consultant,)
+            serializer_consultant = ConsultantSerializer(consultant)
             question = request.data.get('questions')
             question_model = models.Question(
-                question_1 = question['0'] ,
+                question_1 = datebirthtoage(user.date_birth) ,
                 question_2 = question['1'] ,
                 question_3 = question['2'] ,
                 question_4 = question['3'] ,
@@ -74,8 +110,9 @@ class VisitViewset(APIView):
                 question_8 = question['7'] ,
                 question_9 = question['8'] ,
                 question_10 = question['9'] )
-            question_model.save()
+            # question_model.save()
             serializer_question = serializers.QuestionSerializer(question_model)
+
 
 
             kind = models.KindOfCounseling.objects.filter(id= request.data.get ('kind'))
@@ -101,7 +138,7 @@ class VisitViewset(APIView):
 
             visit_model = models.Visit(customer=user , consultant =consultant  ,kind = kind, questions = question_model , date = date)
 
-            visit_model.save()
+            # visit_model.save()
             models.SelectTime.objects.filter(id=date.id).update(reserve=True)
             
             return Response({'message' : 'your visit set'}, status=status.HTTP_201_CREATED)
@@ -143,7 +180,7 @@ class VisitViewset(APIView):
 
 
 
-class VisitConsultations (APIView) :
+class VisitConsultationsViewset (APIView) :
     def get(self ,request) :
         Authorization = request.headers['Authorization']
         if not Authorization:
@@ -158,8 +195,8 @@ class VisitConsultations (APIView) :
         df ['consultant'] = df['consultant'].apply(consultantfromid)
         df ['customer'] = df['customer'].apply(userfromid)
         df ['kind'] = df['kind'].apply(kindfromid)
+        df['time'] = df ['date'].apply(timefromid)
         df ['date'] = df['date'].apply(datefromid)
-        df.insert(loc=10, column='time', value='')
         df = df.drop(columns='create_at')
         df['survey'] = df['survey'].fillna(0)
         df['note'] = df['note'].fillna('')
@@ -168,12 +205,44 @@ class VisitConsultations (APIView) :
         
 
 
+class VisitConsultationsDetialViewset(APIView):
+    def get(self,request ,id ) :
+        Authorization = request.headers.get ('Authorization')
+        if not Authorization :
+            return Response({'error':'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        consultant = fun.decryptionConsultant(Authorization)
+        if not consultant :
+            return Response ({'error' : 'Consultant not found'} , status=status.HTTP_404_NOT_FOUND)
+        consultant = consultant.first()
+        visits = models.Visit.objects.filter(id = id)
+        if not visits.exists():
+            return Response({'message' : 'not found visit'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serialized_visits = serializers.VisitSerializer(visits, many=True).data
+        df = pd.DataFrame(serialized_visits)
+        print(df)
+        df['consultant'] = df ['consultant'].apply(consultantfromid)
+        df['customer'] = df ['customer'].apply(userfromid)
+        df['kind'] = df ['kind'].apply(kindfromid)
+        df['time'] = df ['date'].apply(timefromid)
+        df['date'] = df ['date'].apply(datefromid)
+        df = df.drop(columns='create_at')
+        df ['survey'] = df['survey'].fillna (0)
+        df ['note'] = df['note'].fillna('')
+        df ['questions'] =df['questions'].apply(questiontorisking)
+        df['risktaking'] =[x[0] for x in df['questions']]
+        df['capital'] =[x[1] for x in df['questions']]
+        df = df.drop(columns='questions')
+
+        df = df.to_dict('records')[0]
+        return Response(df, status=status.HTTP_200_OK)
+    
+
+
 
 
 # Question
-
 class QuestionViewset(APIView):
-
     def post (self, request) :
         Authorization = request.headers.get('Authorization')
         if not Authorization :
