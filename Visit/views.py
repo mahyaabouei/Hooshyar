@@ -70,13 +70,15 @@ def questiontorisking (id):
     risktaking = risktaking + int(str( serializer_question['question_7']).replace('1', '0').replace('3', '4').replace('4', '6'))
     risktaking = risktaking + int(str( serializer_question['question_8']).replace('1', '0').replace('2', '1').replace('3', '2').replace('4', '3'))
     risktaking = risktaking + int(str( serializer_question['question_9']).replace('1', '0').replace('3', '4').replace('4', '6'))
-    return [risktaking,serializer_question['question_10']]
+    return [risktaking,serializer_question['question_10'],serializer_question['question_1']]
 
-def datebirthtoage (user) :
-    date_now = datetime.datetime.now()
-    date_now = datetime.datetime.strptime(date_now, "%Y-%m-%dT%H:%M:%S")
-    user = date_now - user
-    return user
+
+
+def datebirthtoage (date) :
+    date_now = datetime.datetime.now().date()
+    age = date_now -date
+    age = int (age.days/365.2425)
+    return age
 
 
 
@@ -110,7 +112,7 @@ class VisitViewset(APIView):
                 question_8 = question['7'] ,
                 question_9 = question['8'] ,
                 question_10 = question['9'] )
-            # question_model.save()
+            question_model.save()
             serializer_question = serializers.QuestionSerializer(question_model)
 
 
@@ -138,7 +140,7 @@ class VisitViewset(APIView):
 
             visit_model = models.Visit(customer=user , consultant =consultant  ,kind = kind, questions = question_model , date = date)
 
-            # visit_model.save()
+            visit_model.save()
             models.SelectTime.objects.filter(id=date.id).update(reserve=True)
             
             return Response({'message' : 'your visit set'}, status=status.HTTP_201_CREATED)
@@ -232,12 +234,10 @@ class VisitConsultationsDetialViewset(APIView):
         df ['questions'] =df['questions'].apply(questiontorisking)
         df['risktaking'] =[x[0] for x in df['questions']]
         df['capital'] =[x[1] for x in df['questions']]
+        df ['age'] = [x[2]for x in df ['questions']]
         df = df.drop(columns='questions')
-
         df = df.to_dict('records')[0]
         return Response(df, status=status.HTTP_200_OK)
-    
-
 
 
 
@@ -273,6 +273,8 @@ class QuestionViewset(APIView):
             return Response ([],status=status.HTTP_200_OK)
         serializer = serializers.QuestionSerializer(question , many = True)
         return Response (serializer.data , status=status.HTTP_200_OK)
+
+
 
 
 
