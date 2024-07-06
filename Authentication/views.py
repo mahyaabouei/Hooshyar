@@ -185,7 +185,7 @@ class AuthCreateView(generics.CreateAPIView):
 
 
 
-# all Consultant profile
+# all Consultant profile for user
 class ConsultantViewset(APIView) :
     def get (self , request) :
         Authorization = request.headers.get('Authorization')
@@ -207,13 +207,32 @@ class ConsultantViewset(APIView) :
 
 
 
+# show consultant profile for consultant
+class ConsultantProfileViewset (APIView) :
+    def get (self,request) :
+        Authorization = request.headers['Authorization']
+        if not Authorization:
+            return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        consultant = fun.decryptionConsultant(Authorization)
+        if not consultant:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        consultant_instance = consultant.first()
+        serializer_consultant = serializers.ConsultantSerializer(consultant_instance).data
+        return Response (serializer_consultant , status=status.HTTP_200_OK)
+
+
+
+
+
+
+
 
    
 
 
 # User Profile 
-class UserProfileView(APIView):
-
+class UserProfileViewset(APIView):
     # show user profile
     def get(self , request):
         Authorization = request.headers['Authorization']

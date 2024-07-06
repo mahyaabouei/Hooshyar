@@ -88,10 +88,14 @@ class SelectTimeConsultantViewset(APIView):
 class SetTimeConsultant (APIView) :
         def post (self , request) :
             Authorization = request.headers.get('Authorization')
+            print(Authorization)
             if not Authorization:
                 return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
-
-            consultant = fun.decryptionConsultant(Authorization).first()
+            consultant = fun.decryptionConsultant(Authorization)
+            print(consultant)
+            if  consultant == None:
+                return Response({'error': 'consultant none'}, status=status.HTTP_404_NOT_FOUND)
+            consultant = consultant.first()
             if not consultant:
                 return Response({'error': 'consultant not found'}, status=status.HTTP_404_NOT_FOUND)
             
@@ -110,3 +114,33 @@ class SetTimeConsultant (APIView) :
             set_time_model.save()
 
             return Response ({'message' : 'زمان مشاوره ثبت شد'},status=status.HTTP_200_OK)
+        
+
+
+        def delete(self, request):
+                Authorization = request.headers.get('Authorization')
+                if not Authorization:
+                    return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+                consultant = fun.decryptionConsultant(Authorization).first()
+                if not consultant:
+                    return Response({'error': 'consultant not found'}, status=status.HTTP_404_NOT_FOUND)
+                
+                time_stamp = request.data.get('date')
+                if not time_stamp:
+                    return Response({'message': 'no date'}, status=status.HTTP_404_NOT_FOUND)
+                
+                time_stamp = int(time_stamp) / 1000
+                time_stamp = datetime.fromtimestamp(time_stamp)
+                date = time_stamp.date()
+                time = time_stamp.hour
+                
+                set_date = models.SelectTime.objects.filter(consultant=consultant, date=date, time=time)
+                if not set_date.exists():
+                    return Response({'message': 'زمان مشاوره پیدا نشد'}, status=status.HTTP_404_NOT_FOUND)
+                set_time_instance = set_date.first()
+                if set_time_instance.reserve:
+                    return Response({'message': 'زمان مشاوره رزرو شده است و نمی‌توان آن را حذف کرد'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                set_time_instance.delete()
+                return Response({'message': 'زمان مشاوره حذف شد'}, status=status.HTTP_200_OK)                

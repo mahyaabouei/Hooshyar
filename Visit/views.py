@@ -13,7 +13,7 @@ from Authentication.serializers import UserSerializer , ConsultantSerializer
 from Stracture.serializers import SelectTimeSerializer
 import pandas as pd
 from persiantools.jdatetime import JalaliDate
-
+from Authentication.models import Consultant
 
 
 # georgia date to jalali
@@ -309,9 +309,44 @@ class KindOfCounselingViewset(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# card box for user
+class CardBoxUserViewSet(APIView) :
+    def get (self,request) :
+        Authorization = request.headers.get('Authorization')
+        if not Authorization:
+            return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = fun.decryptionUser(Authorization)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = user.first()
+        print(user)
+        visits = models.Visit.objects.filter(customer = user)
+        number_visit = visits.count()
+        consultant = models.Consultant.objects.all()
+        number_consultant = consultant.count()
+        active_visit = models.Visit.objects.filter(status = 'completing',customer = user )
+        number_active_visit = active_visit.count()
+        return Response({'تعداد کل ویزیت های کاربر ' :number_visit  , 'تعداد کل مشاوران ' :number_consultant , 'تعداد مشاوره های فعال کاربر' : number_active_visit} , status=status.HTTP_200_OK)
+   
 
+    
 
+# card box for consultant
+class CardBoxConsultantViewset (APIView) :
+    def get (self,request) :
+        Authorization = request.headers.get ('Authorization')
+        if not Authorization :
+            return Response({'error':'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        consultant = fun.decryptionConsultant(Authorization)
+        if not consultant :
+            return Response ({'error' : 'Consultant not found'} , status=status.HTTP_404_NOT_FOUND)
+        consultant = consultant.first()        
+        visits = models.Visit.objects.filter(consultant=consultant)
+        number_visits = visits.count()
+        active_visit = models.Visit.objects.filter(status = 'completing',consultant=consultant)
+        number_active_visit = active_visit.count()
+        consultant_score = consultant.rank
 
-
-
+        return Response({'تعداد کل ویزیت های مشاور' : number_visits , 'تعداد مشاوره های در انتظار مشاور' : number_active_visit ,'امتیاز مشاور' :consultant_score } , status=status.HTTP_200_OK )
 
