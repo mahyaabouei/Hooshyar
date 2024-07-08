@@ -265,7 +265,7 @@ class UserProfileViewset(APIView):
 
 
 
-# Agreement 
+# Agreement update false  to  true
 class AgreementViewset(APIView):
     def put(self, request):
         Authorization = request.headers.get('Authorization')
