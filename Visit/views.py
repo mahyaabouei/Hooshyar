@@ -327,7 +327,7 @@ class CardBoxUserViewSet(APIView) :
         number_consultant = consultant.count()
         active_visit = models.Visit.objects.filter(status = 'completing',customer = user )
         number_active_visit = active_visit.count()
-        return Response({'تعداد کل ویزیت های کاربر ' :number_visit  , 'تعداد کل مشاوران ' :number_consultant , 'تعداد مشاوره های فعال کاربر' : number_active_visit} , status=status.HTTP_200_OK)
+        return Response({'visits' :number_visit  , 'all_consultants' :number_consultant , 'active_consultations' : number_active_visit} , status=status.HTTP_200_OK)
    
 
     
@@ -348,5 +348,5 @@ class CardBoxConsultantViewset (APIView) :
         number_active_visit = active_visit.count()
         consultant_score = consultant.rank
 
-        return Response({'تعداد کل ویزیت های مشاور' : number_visits , 'تعداد مشاوره های در انتظار مشاور' : number_active_visit ,'امتیاز مشاور' :consultant_score } , status=status.HTTP_200_OK )
+        return Response({'visits' : number_visits , 'consultations_waiting' : number_active_visit ,'Consultant_score' :consultant_score } , status=status.HTTP_200_OK )
 
