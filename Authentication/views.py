@@ -266,17 +266,18 @@ class UserProfileViewset(APIView):
 
 
 # Agreement 
-class AgreementViewset(APIView) :
-    def put (self,request) :
-        Authorization = request.headers['Authorization']
+class AgreementViewset(APIView):
+    def put(self, request):
+        Authorization = request.headers.get('Authorization')
         if not Authorization:
             return Response({'error': 'Authorization header is missing'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         user = fun.decryptionUser(Authorization)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        
         user_instance = user.first()
         user_instance.agreement = True
-        user_instance.update()
+        user_instance.save()  
 
-        return Response({'message' : 'update'}, status=status.HTTP_200_OK)
+        return Response({'message': 'update'}, status=status.HTTP_200_OK)
