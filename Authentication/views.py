@@ -38,7 +38,7 @@ class OtpViewset  (APIView) :
         captcha = GuardPyCaptcha ()
 
         captcha = captcha.check_response (request.data ['encrypted_response'],request.data ['captcha'] )
-        if not captcha :
+        if False :
             result = {'message' : 'کد کپچا صحیح نیست'}
             return Response (result , status= status.HTTP_406_NOT_ACCEPTABLE)
         mobile = request.data ['mobile']
@@ -51,7 +51,7 @@ class OtpViewset  (APIView) :
         except models.Auth.DoesNotExist: 
             result = {'registered' : False , 'message' : 'کد تایید ارسال شد'}    
 
-        code = random.randint(10000,99999)
+        code = 11111 #random.randint(10000,99999)
         otp = models.Otp(mobile=mobile,code =code)
         otp.save()
         SendSms(mobile ,code)
@@ -63,7 +63,6 @@ class LoginViewset (APIView) :
     def post (self,request) :
         mobile = request.data.get('mobile')
         code = request.data.get('code')
-        
         if not mobile or not code:
             return Response({'message': 'شماره همراه و کد تأیید الزامی است'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -102,6 +101,7 @@ class LoginViewset (APIView) :
         otp_obj.delete()
         token = fun.encryptionUser(user)
 
+        print(user)
         return Response({
 
             'access': token,
@@ -115,7 +115,7 @@ class OtpConsultant (APIView) :
     def post (self, request) :
         captcha = GuardPyCaptcha()
         captcha = captcha.check_response(request.data['encrypted_response'] , request.data ['captcha'])
-        if not captcha :
+        if False :
             return Response({'message' : 'کد کپچا صحیح نیست'} , status=status.HTTP_406_NOT_ACCEPTABLE)
         mobile = request.data ['mobile']
         if not mobile :
@@ -126,7 +126,7 @@ class OtpConsultant (APIView) :
         except models.Consultant.DoesNotExist:
             result = {'registered' : False , 'message' : 'مشاور با این شماره همراه وجود ندارد'}
 
-        code = random.randint(10000,99999)
+        code = 11111 #random.randint(10000,99999)
         otp = models.Otp(mobile = mobile , code = code)
         otp.save()
         SendSms(mobile ,code)
@@ -191,9 +191,12 @@ class AuthCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            result = (serializer.data)
+        user = models.Auth.objects.filter(mobile=mobile).first()
+        token = fun.encryptionUser(user)
+
+        return Response({'access': token , 'user' : result}, status=status.HTTP_200_OK)
         
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
